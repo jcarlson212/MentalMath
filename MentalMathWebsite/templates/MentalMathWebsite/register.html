@@ -6,7 +6,7 @@ Register
 {% block content %}
 
 <div class="mx-auto my-3 createAccountContainer">
-    <form>
+    <form action="{% url 'register' %}" method="post">
         <div class="form-group">
             <label for="email">Email address</label>
             <input type="email" class="form-control" id="email" name="email" aria-describedby="emailHelp" placeholder="name@example.com">
@@ -22,6 +22,15 @@ Register
         {% csrf_token %}
         <button type="submit" class="btn btn-primary">Submit</button>
     </form>
+
+    {% if message != "" %} 
+
+    <div class="alert alert-danger" role="alert">
+        {{ message }}
+    </div>
+
+    {% endif %}
 </div>
+
 
 {% endblock %}
