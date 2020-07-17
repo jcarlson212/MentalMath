@@ -1,13 +1,50 @@
 {% extends 'MentalMathWebsite/layout.html' %}
+
+
 {% block title %}
 Mental Math
 {% endblock %}
 
+
+{% block moreScripts %}
+<script>
+    const operators = ["+", "*", "/", "-"]
+
+    function clearMatch() {
+        document.querySelector('#match').innerHTML = "";
+    }
+
+    function findMatch() {
+        console.log("finding a match...")
+        //first we clear the match div
+        clearMatch();
+
+        const num1 = Math.floor(Math.random()*100);
+        const op = operators[Math.floor(Math.random()*operators.length)];
+        const num2 = Math.floor(Math.random()*100);
+
+        const question = document.createElement('h1');
+        question.style.color = "white";
+        question.innerText = num1.toString() + " " + op + " " + num2.toString()
+        document.querySelector('#match').append(question)
+    }
+
+</script>
+{% endblock %}
+
+
 {% block content %}
 <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
+    <div class="container text-center my-5" style="height: 100px;">
+        <div id="match" style="display:inline-block;">
+
+        </div>
+    </div>
+    
+
     <div class="container text-center my-auto ">
         <div class="find-match-button">
-            <button type="button" class="btn btn-info btn-lg">Find Match</button>
+            <button type="button" class="btn btn-info btn-lg" onclick="findMatch()">Find Match</button>
         </div>
     </div>
 </div>
