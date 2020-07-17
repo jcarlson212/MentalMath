@@ -4,23 +4,28 @@ Login
 {% endblock %}
 
 {% block content %}
-<div class="mx-auto my-3 createAccountContainer">
-    <form action="{% url 'login_view' %}" method="post">
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" name="username">
+<div class="bg-dark d-flex flex-column" style="height: 100%;">
+    <div class="bg-dark d-flex flex-column" style="height: 80%;">
+        <div class="mx-auto my-auto createAccountContainer">
+            <form action="{% url 'login_view' %}" method="post">
+                <div class="form-group">
+                    <label for="username" style="color: white;">Username</label>
+                    <input type="text" class="form-control" id="username" name="username">
+                </div>
+                <div class="form-group">
+                    <label for="password" style="color: white;">Password</label>
+                    <input type="password" class="form-control" id="password" name="password">
+                </div>
+                {% csrf_token %}
+                <button type="submit" class="btn btn-info">Submit</button>
+            </form>
+            {% if message != "" %} 
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+            {% endif %}
         </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" name="password">
-        </div>
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
-    {% if message != "" %} 
-    <div class="alert alert-danger" role="alert">
-        {{ message }}
     </div>
-    {% endif %}
+    
 </div>
 {% endblock %}
