@@ -12,6 +12,8 @@ class ChatConsumer(AsyncConsumer):
         await self.send({
             "type": "websocket.accept"
         })
+        me = self.scope['user']
+        print(me)
         await self.send({
             "type": "websocket.send",
             "text": "hello"
@@ -22,3 +24,7 @@ class ChatConsumer(AsyncConsumer):
 
     async def websocket_disconnect(self, event):
         print("disconnected", event)
+
+    @database_sync_to_async
+    def get_thread(self, user, other_username):
+        return Tread.objects.get_or_new(user, other_username)[0]

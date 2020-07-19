@@ -13,19 +13,31 @@ Mental Math
     let ws = (window.location.protocol === 'https:') ? 'wss://' : 'ws://'
     let wsStart = ws + window.location.host + window.location.pathname
     let socket = new WebSocket(wsStart);
-    socket.onmessage = (event) => {
-        console.log("message: ", event)
-    }
-    socket.onopen = (event) => {
-        console.log("message: ", event)
-    }
-    socket.onerror = (event) => {
-        console.log("message: ", event)
-    } 
-    socket.onclose = (event) => {
-        console.log("message: ", event)
-    }
 
+    window.addEventListener('DOMContentLoaded', (event) => {
+        let formData = document.getElementById('match-form')
+        console.log(formData)
+        socket.onmessage = (event) => {
+            console.log("message: ", event)
+        }
+        socket.onopen = (event) => {
+            console.log("message: ", event)
+            formData.addEventListener('submit', (event) => {
+                console.log("form submitted", event)
+                const numToSubmit = event.path[0][0].value
+                console.log(numToSubmit)
+                socket.send(numToSubmit)
+            })
+        }
+        socket.onerror = (event) => {
+            console.log("message: ", event)
+        } 
+        socket.onclose = (event) => {
+            console.log("message: ", event)
+        }
+    });
+    
+    
     function findMatch() {
         console.log("finding a match...")
         //first we clear the match div
@@ -47,7 +59,7 @@ Mental Math
     <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
         <div class="container text-center my-5" style="height: 100px;">
             <div id="match" style="display:inline-block;">
-                <form id="match-form" style="visibility: hidden;" action="#" method="post">
+                <form id="match-form" style="visibility: hidden;" src='' method="dialog">
                     <div class="form-group">
                         <h1 id="question-header" style="color: white;"></h1>
                     </div>
