@@ -4,19 +4,20 @@ from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator, AllowedHostsOriginValidator
 
 from MentalMathWebsite.consumers import ChatConsumer
-
+from django.urls import path
 
 application = ProtocolTypeRouter({
     'websocket': AllowedHostsOriginValidator(
         AuthMiddlewareStack(
             URLRouter(
                 [
-                    url("MentalMathWebsite/", ChatConsumer)
+                    path("test", ChatConsumer),
+                    path("MentalMathWebsite/<username>", ChatConsumer),
+                    path("MentalMathWebsite/findGame", ChatConsumer),
+                    path("MentalMathWebsite/<username>/<username>", ChatConsumer),
                 ]
             )
         )
     )
 })
 
-#ws//ourdomain/<username> 
-#
