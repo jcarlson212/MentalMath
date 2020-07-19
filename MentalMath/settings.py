@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'MentalMath.urls'
+ASGI_APPLICATION = "MentalMath.routing.application"
 
 TEMPLATES = [
     {
