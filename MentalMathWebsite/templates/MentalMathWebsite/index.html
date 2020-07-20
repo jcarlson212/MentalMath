@@ -14,10 +14,19 @@ Mental Math
         document.getElementById("numberInput").value = ""
     }
 
+    const loadLoadingAnimation = () => {
+        document.getElementById("loadingAnimation").style.visibility = "visible";
+    }
+
+    const clearLoadingAnimation = () => {
+        document.getElementById("loadingAnimation").style.visibility = "hidden";
+    }
+
 
     let findGameSocket =null;
     let gameSocket = null;
     function findMatch() {
+        loadLoadingAnimation();
         console.log("finding a match...")
         //first we disconnect any previous sockets
         if(findGameSocket !== null){
@@ -76,6 +85,7 @@ Mental Math
                             const diff = parseInt(event.substr(startIndex, endIndex-startIndex+1));
                             clearNumberInput()
                             console.log("the numbers and ops posted were: ", num1, num2, operator);
+                            clearLoadingAnimation()
                             document.getElementById('question-header').innerText = num1 + " " + operator + " " + num2;
                             document.getElementById('match-form').style.visibility = "visible";
                             gameCount++;
@@ -109,30 +119,47 @@ Mental Math
 
 {% block content %}
     <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
+        {%if user.is_authenticated %}
+        <div id="count" class="alert alert-success" role="alert" style="margin-top: 150px; width: 200px; margin-left: 10px;">
+            Points earned: 0
+        </div>
+        {% endif %}
         <div class="container text-center my-5" style="height: 100px;">
             <div id="match" style="display:inline-block;">
                 <form id="match-form" style="visibility: hidden;" src='' method="dialog">
                     <div class="form-group">
-                        <h1 id="question-header" style="color: white; font-size: x-large"></h1>
+                        <h1 id="question-header" style="color: white; font-size: 80; margin-top: 80px;"></h1>
                     </div>
                     
                     <div class="form-group">
                         <input id="numberInput" class="form-control" type="number" name="userNum" placeholder="1234">
                     </div>
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-info">Submit</button>
+                    <button type="submit" class="btn btn-info btn-lg1">Submit</button>
                 </form>
             </div>
         </div>
-        <div id="count" class="alert alert-success" role="alert" style="margin-top: 150px; width: 200px; margin-left: 10px;">
-            Points earned: 0
+        <div id="loadingAnimation" class="loader" style="visibility: hidden;">
+            <div class="duo duo1">
+                <div class="dot dot-a"></div>
+                <div class="dot dot-b"></div>
+            </div>
+            <div class="duo duo2">
+                <div class="dot dot-a"></div>
+                <div class="dot dot-b"></div>
+            </div>
         </div>
-
+        {% if user.is_authenticated %}
         <div class="container text-center my-auto ">
             <div class="find-match-button">
                 <button type="button" class="btn btn-info btn-lg" onclick="findMatch()">Find Match</button>
             </div>
         </div>
+        {% else %}
+        <div id="count" class="alert alert-danger text-center" role="alert" style=" width: 40%; margin-left: 30%">
+            Please Login
+        </div>
+        {% endif %}
     </div>
     
 
