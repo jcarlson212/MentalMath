@@ -1,6 +1,7 @@
 import asyncio
 import json
 import random
+import threading
 from time import time 
 from django.contrib.auth import get_user_model
 from channels.consumer import AsyncConsumer
@@ -161,12 +162,27 @@ class SoloGameConsumer(AsyncConsumer):
     async def websocket_disconnect(self, event):
         print("disconnected", event)
 
+
+    @database_sync_to_async
+    def add_point_to_user(self, username):
+        database_request_thread = threading.Thread(
+            target=self.add_points_to_user_thread_func, 
+            args=(username,)
+        )
+        database_request_thread.start()
+        
+    def add_points_to_user_thread_func(self, username):
+        winner = User.objects.get(username=username)
+        winner.points = winner.points + 1
+        winner.save()
+
+"""
     @database_sync_to_async
     def add_point_to_user(self, username):
         winner = User.objects.get(username=username)
         winner.points = winner.points + 1
         winner.save()
-        
+"""
 
 class GameConsumer(AsyncConsumer):
     async def websocket_connect(self, event):
