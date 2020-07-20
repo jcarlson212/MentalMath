@@ -4,6 +4,7 @@ from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator, AllowedHostsOriginValidator
 
 from MentalMathWebsite.consumers import ChatConsumer, FindGameConsumer, GameConsumer, SoloGameConsumer
+
 from django.urls import path
 
 application = ProtocolTypeRouter({
