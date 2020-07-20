@@ -52,7 +52,10 @@ Mental Math
                     let formData = document.getElementById('match-form');
                     formData.addEventListener('submit', (event) => {
                         const numToSubmit = event.path[0][0].value
-                        gameSocket.send(numToSubmit + " " + "{{ user.username }}")
+                        if(numToSubmit !== " " && numToSubmit !== ""){
+                            gameSocket.send(numToSubmit + " " + "{{ user.username }}")
+                        }
+                        
                     });
                     let gameCount = 0;
                     gameSocket.onmessage = (event) => {

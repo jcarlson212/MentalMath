@@ -2,14 +2,13 @@ import asyncio
 import json
 import random
 import threading
-from time import time 
+from time import time, sleep
 from django.contrib.auth import get_user_model
 from channels.consumer import AsyncConsumer
 from channels.db import database_sync_to_async
 
 from .models import Thread, ChatMessage
 from .models import User
-
 
 MAX_NUM = 20
 class FindGameConsumer(AsyncConsumer):
@@ -19,6 +18,7 @@ class FindGameConsumer(AsyncConsumer):
         await self.send({
             "type": "websocket.accept"
         })
+        self.event_loop = asyncio.get_event_loop()
 
     async def websocket_receive(self, event):
         print("receive", event)
@@ -36,19 +36,35 @@ class FindGameConsumer(AsyncConsumer):
             })
         else:
             #wait a bit before removing them from the queue and setting them up in a match against a bot
-            await asyncio.sleep(5)
-            userFound = False
-            for i in range(0, len(self.userQ)):
-                if self.userQ[i] == event['text']:
-                    #remove it 
-                    userFound = True
-                    break
-            if userFound:
-                await self.send({
-                    "type": "websocket.send",
-                    "text": "/MentalMathWebsite/" + self.userQ.pop()
-                })
+            await self.add_point_to_user(event["text"])
 
+    @database_sync_to_async
+    def add_point_to_user(self, username):
+        vs_ai_thread = threading.Thread(
+            target=self.determine_if_user_vs_ai, 
+            args=(username,)
+        )
+        vs_ai_thread.start()
+
+    async def give_user_ai_match(self, username):
+        await self.send({
+            "type": "websocket.send",
+            "text": "/MentalMathWebsite/" + username
+        })
+
+    def determine_if_user_vs_ai(self, username):
+        sleep(5)
+        userFound = False
+        for i in range(0, len(self.userQ)):
+            if self.userQ[i] == username:
+                #remove it 
+                userFound = True
+                break
+        if userFound:
+            print("Fdgfg")
+            self.userQ.remove(username)
+            asyncio.ensure_future(self.give_user_ai_match(username), loop=self.event_loop)
+            
 
     async def websocket_disconnect(self, event):
         print("disconnected", event)
@@ -295,6 +311,13 @@ class GameConsumer(AsyncConsumer):
 
     @database_sync_to_async
     def add_point_to_user(self, username):
+        database_request_thread = threading.Thread(
+            target=self.add_points_to_user_thread_func, 
+            args=(username,)
+        )
+        database_request_thread.start()
+        
+    def add_points_to_user_thread_func(self, username):
         winner = User.objects.get(username=username)
         winner.points = winner.points + 1
         winner.save()
