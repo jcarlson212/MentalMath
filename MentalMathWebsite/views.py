@@ -49,3 +49,9 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return render(request, "MentalMathWebsite/index.html")
+
+def profile(request):
+    if request.user.is_authenticated:
+        return render(request, "MentalMathWebsite/profile.html")
+    else:
+        return HttpResponse("Please log in")

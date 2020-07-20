@@ -102,7 +102,6 @@ class SoloGameConsumer(AsyncConsumer):
         })
 
     async def websocket_receive(self, event):
-        print("receive5454545454545545454", event)
         print(event, " was sent to us")
         startText = "start_new_game"
         endIndex = 0
@@ -220,12 +219,14 @@ class GameConsumer(AsyncConsumer):
         })
 
     async def websocket_receive(self, event):
-        print("receive5454545454545545454", event)
         print(event, " was sent to us")
         startText = "start_new_game"
         endIndex = 0
-        while event["text"][endIndex + 1] != ' ':
-            endIndex = endIndex + 1
+        if event["text"][0] != ' ':
+            while event["text"][endIndex + 1] != ' ':
+                endIndex = endIndex + 1
+        else:
+            endIndex = -1
 
         if event["text"][0:endIndex+1] == "start_new_game":
             await self.newProblem()
@@ -236,6 +237,7 @@ class GameConsumer(AsyncConsumer):
                 if self.op == "+":
                     if self.num1 + self.num2 == number_sent:
                         self.paused = True
+                        await self.add_point_to_user(person_sent)
                         await self.send({
                             "type": "websocket.send",
                             "text": person_sent + " won"
@@ -243,6 +245,7 @@ class GameConsumer(AsyncConsumer):
                 elif self.op == "-":
                     if self.num1 - self.num2 == number_sent:
                         self.paused = True
+                        await self.add_point_to_user(person_sent)
                         await self.send({
                             "type": "websocket.send",
                             "text": person_sent + " won"
@@ -250,6 +253,7 @@ class GameConsumer(AsyncConsumer):
                 elif self.op == "/":
                     if int(self.num1 / self.num2) == number_sent:
                         self.paused = True
+                        await self.add_point_to_user(person_sent)
                         await self.send({
                             "type": "websocket.send",
                             "text": person_sent + " won"
@@ -257,6 +261,7 @@ class GameConsumer(AsyncConsumer):
                 elif self.op == "*":
                     if self.num1*self.num2 == number_sent:
                         self.paused = True
+                        await self.add_point_to_user(person_sent)
                         await self.send({
                             "type": "websocket.send",
                             "text": person_sent + " won"
@@ -272,6 +277,11 @@ class GameConsumer(AsyncConsumer):
     async def websocket_disconnect(self, event):
         print("disconnected", event)
 
+    @database_sync_to_async
+    def add_point_to_user(self, username):
+        winner = User.objects.get(username=username)
+        winner.points = winner.points + 1
+        winner.save()
 
 class ChatConsumer(AsyncConsumer):
     async def websocket_connect(self, event):
