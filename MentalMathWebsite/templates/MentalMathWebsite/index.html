@@ -10,6 +10,11 @@ Mental Math
 <script>
     const operators = ["+", "*", "/", "-"]
     
+    const clearNumberInput = () => {
+        document.getElementById("numberInput").value = ""
+    }
+
+
     let findGameSocket =null;
     let gameSocket = null;
     function findMatch() {
@@ -69,7 +74,7 @@ Mental Math
                                 endIndex++;
                             }
                             const diff = parseInt(event.substr(startIndex, endIndex-startIndex+1));
-
+                            clearNumberInput()
                             console.log("the numbers and ops posted were: ", num1, num2, operator);
                             document.getElementById('question-header').innerText = num1 + " " + operator + " " + num2;
                             document.getElementById('match-form').style.visibility = "visible";
@@ -83,7 +88,8 @@ Mental Math
                             }, diff*1000)
                         }else if(event === "{{user.username}} won" || event === "You won" ){
                             console.log("I won")
-                            document.getElementById("count").innerText = (parseInt(document.getElementById("count").innerText) + 1)
+                            const pointsEarnedStart = "Points earned: "
+                            document.getElementById("count").innerText = pointsEarnedStart + (parseInt(document.getElementById("count").innerText.substr((pointsEarnedStart).length))+ 1)
                             gameSocket.send("start_new_game" + " " + "{{user.username}}")
                         }else{
                             console.log("I lost")
@@ -102,26 +108,24 @@ Mental Math
 
 
 {% block content %}
-    <div id="count">
-        0
-    </div>
-
     <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
         <div class="container text-center my-5" style="height: 100px;">
             <div id="match" style="display:inline-block;">
                 <form id="match-form" style="visibility: hidden;" src='' method="dialog">
                     <div class="form-group">
-                        <h1 id="question-header" style="color: white;"></h1>
+                        <h1 id="question-header" style="color: white; font-size: x-large"></h1>
                     </div>
                     
                     <div class="form-group">
-                        <input class="form-control" type="number" name="userNum" placeholder="1234">
+                        <input id="numberInput" class="form-control" type="number" name="userNum" placeholder="1234">
                     </div>
                     {% csrf_token %}
                     <button type="submit" class="btn btn-info">Submit</button>
                 </form>
-            
             </div>
+        </div>
+        <div id="count" class="alert alert-success" role="alert" style="margin-top: 150px; width: 200px; margin-left: 10px;">
+            Points earned: 0
         </div>
 
         <div class="container text-center my-auto ">
