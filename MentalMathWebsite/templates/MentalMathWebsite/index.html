@@ -9,57 +9,92 @@ Mental Math
 {% block moreScripts %}
 <script>
     const operators = ["+", "*", "/", "-"]
-
-    let ws = (window.location.protocol === 'https:') ? 'wss://' : 'ws://'
-    let wsStart = ws + window.location.host + window.location.pathname + "{{ user.username }}"
-    let mySocket = new WebSocket(wsStart);
-    let gameSocket = new WebSocket(ws + window.location.host + "/test")
-    gameSocket.onmessage = (event) => {
-        console.log("game socket received message: ", event)
-    }
-    gameSocket.onopen = (event) => {
-
-    }
-    gameSocket.onerror = (event) => {
-        console.log(event)
-    }
-    gameSocket.onclose = (event) => {
-        console.log(event);
-    }
-
-    window.addEventListener('DOMContentLoaded', (event) => {
-        let formData = document.getElementById('match-form')
-        console.log(formData)
-        mySocket.onmessage = (event) => {
-            console.log("message: ", event)
-        }
-        mySocket.onopen = (event) => {
-            console.log("message: ", event)
-            formData.addEventListener('submit', (event) => {
-                const numToSubmit = event.path[0][0].value
-                console.log(numToSubmit)
-                gameSocket.send(numToSubmit)
-            })
-        }
-        mySocket.onerror = (event) => {
-            console.log("message: ", event)
-        } 
-        mySocket.onclose = (event) => {
-            console.log("message: ", event)
-        }
-    });
     
-    
+    let findGameSocket =null;
+    let gameSocket = null;
     function findMatch() {
         console.log("finding a match...")
-        //first we clear the match div
+        //first we disconnect any previous sockets
+        if(findGameSocket !== null){
+            findGameSocket.close()
+        }
+        if(gameSocket !== null){
+            gameSocket.close()
+        }
 
-        const num1 = Math.floor(Math.random()*100);
-        const op = operators[Math.floor(Math.random()*operators.length)];
-        const num2 = Math.floor(Math.random()*100);
-        console.log(document.getElementById('question-header'))
-        document.getElementById('question-header').innerText = num1.toString() + " " + op + " " + num2.toString();
-        document.getElementById('match-form').style.visibility = "visible";
+
+        const ws = (window.location.protocol === 'https:') ? 'wss://' : 'ws://'
+        const endpoint = ws + window.location.host + window.location.pathname + "findGame"
+
+        findGameSocket = new WebSocket(endpoint);
+        findGameSocket.onopen = (event) => {
+            findGameSocket.send("{{ user.username }}")
+            findGameSocket.onmessage = (event) => {
+                console.log("game found at endpoint: ", event)
+                //event should be the endpoint for the match
+                event = event.data
+                gameSocket = new WebSocket(ws + window.location.host + event);
+                gameSocket.onopen = (event) =>{
+                    let formData = document.getElementById('match-form');
+                    formData.addEventListener('submit', (event) => {
+                        const numToSubmit = event.path[0][0].value
+                        gameSocket.send(numToSubmit + " " + "{{ user.username }}")
+                    });
+                    let gameCount = 0;
+                    gameSocket.onmessage = (event) => {
+                        event = event.data
+                        const postedString = "numbers posted:"
+                        if(event.length >= postedString.length && event.substr(0, postedString.length) === postedString){
+                            console.log(event)
+                            let startIndex = postedString.length + 1;
+                            let endIndex = startIndex;
+                            while(endIndex + 1 < event.length && event[endIndex + 1] != ' '){
+                                endIndex++;
+                            }
+                            const num1 = event.substr(startIndex, endIndex-startIndex+1);
+                            console.log(startIndex, endIndex, num1)
+                            startIndex = endIndex + 2;
+                            const operator = event[startIndex];
+                            startIndex = startIndex + 2;
+                            endIndex = startIndex;
+                            while(endIndex + 1 < event.length && event[endIndex + 1] != ' '){
+                                endIndex++;
+                            }
+                            const num2 = event.substr(startIndex, endIndex-startIndex+1);
+
+
+                            startIndex = startIndex + 2;
+                            endIndex = startIndex;
+                            while(endIndex + 1 < event.length && event[endIndex + 1] != ' '){
+                                endIndex++;
+                            }
+                            const diff = parseInt(event.substr(startIndex, endIndex-startIndex+1));
+
+                            console.log("the numbers and ops posted were: ", num1, num2, operator);
+                            document.getElementById('question-header').innerText = num1 + " " + operator + " " + num2;
+                            document.getElementById('match-form').style.visibility = "visible";
+                            gameCount++;
+                            const prevGameCount = gameCount;
+                            setTimeout(() => {
+                                if(prevGameCount === gameCount) {
+                                    console.log("you lost")
+                                    gameSocket.send("start_new_game" + " " + "{{user.username}}")
+                                }
+                            }, diff*1000)
+                        }else if(event === "{{user.username}} won" || event === "You won" ){
+                            console.log("I won")
+                            document.getElementById("count").innerText = (parseInt(document.getElementById("count").innerText) + 1)
+                            gameSocket.send("start_new_game" + " " + "{{user.username}}")
+                        }else{
+                            console.log("I lost")
+                            gameSocket.send("start_new_game" + " " + "{{user.username}}")
+                        }
+                    }
+                }
+                
+            }
+        }
+        
     }
 
 </script>
@@ -67,6 +102,9 @@ Mental Math
 
 
 {% block content %}
+    <div id="count">
+        0
+    </div>
 
     <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
         <div class="container text-center my-5" style="height: 100px;">
