@@ -7,8 +7,7 @@ from django.contrib.auth import get_user_model
 from channels.consumer import AsyncConsumer
 from channels.db import database_sync_to_async
 
-from .models import Thread, ChatMessage
-from .models import User
+from .models import User, Submission
 
 MAX_NUM = 20
 class FindGameConsumer(AsyncConsumer):
@@ -87,6 +86,7 @@ class SoloGameConsumer(AsyncConsumer):
         self.op = op
         self.num2 = num2 
         self.count = 1
+        self.submissionStartTime = time()
         diff = random.randint(2, 10)
         self.submissionTime = time() + diff
 
@@ -109,6 +109,7 @@ class SoloGameConsumer(AsyncConsumer):
         self.op = op
         self.num2 = num2 
         self.count = self.count + 1
+        self.submissionStartTime = time()
         diff = random.randint(2, 10)
         self.submissionTime = time() + diff
     
@@ -138,36 +139,103 @@ class SoloGameConsumer(AsyncConsumer):
                 if self.op == "+":
                     if self.num1 + self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
                             "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "-":
                     if self.num1 - self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
                             "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "/":
                     if int(self.num1 / self.num2) == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
                             "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "*":
                     if self.num1*self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
                             "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
             else:
+                await self.add_submission(
+                    username=person_sent,
+                    op=self.op,
+                    timeTaken=(time() - self.submissionStartTime),
+                    againstAI=True,
+                    isCorrect=False
+                )
                 await self.send({
                     "type": "websocket.send",
                     "text": "You lost"
@@ -180,17 +248,46 @@ class SoloGameConsumer(AsyncConsumer):
 
 
     @database_sync_to_async
-    def add_point_to_user(self, username):
+    def add_point_to_user(self, username, op):
         database_request_thread = threading.Thread(
             target=self.add_points_to_user_thread_func, 
-            args=(username,)
+            args=(username, op,)
         )
         database_request_thread.start()
         
-    def add_points_to_user_thread_func(self, username):
+    def add_points_to_user_thread_func(self, username, op):
         winner = User.objects.get(username=username)
         winner.points = winner.points + 1
+        if op == "+":
+            winner.addition = winner.addition + 1
+        elif op == "-":
+            winner.subtraction = winner.subtraction + 1
+        elif op == "*":
+            winner.multiplication = winner.multiplication + 1
+        else:
+            winner.division = winner.division + 1
         winner.save()
+
+    @database_sync_to_async
+    def add_submission(self, username, op, timeTaken, againstAI, isCorrect):
+        database_request_thread = threading.Thread(
+            target=self.add_submission_thread_func, 
+            args=(username, op, timeTaken, againstAI, isCorrect,)
+        )
+        database_request_thread.start()
+        
+    def add_submission_thread_func(self, username, op, timeTaken, againstAI, isCorrect):
+        user = User.objects.get(username=username)
+        submission = Submission(
+            user=user,
+            againstAI=againstAI,
+            isCorrect=isCorrect,
+            typeOfProblem=op,
+            timeToFinish=timeTaken
+        )
+        submission.save()
+        
+
 
 """
     @database_sync_to_async
@@ -218,6 +315,7 @@ class GameConsumer(AsyncConsumer):
         self.num2 = num2 
         self.count = 1
         self.Q = []
+        self.submissionStartTime = time()
         diff = 10
         self.submissionTime = time() + diff
 
@@ -241,6 +339,7 @@ class GameConsumer(AsyncConsumer):
         self.num2 = num2 
         self.Q = []
         self.count = self.count + 1
+        self.submissionStartTime = time()
         diff = 10
         self.submissionTime = time() + diff
     
@@ -269,36 +368,103 @@ class GameConsumer(AsyncConsumer):
                 if self.op == "+":
                     if self.num1 + self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
-                            "text": person_sent + " won"
+                            "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "-":
                     if self.num1 - self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
-                            "text": person_sent + " won"
+                            "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "/":
                     if int(self.num1 / self.num2) == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
-                            "text": person_sent + " won"
+                            "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
                 elif self.op == "*":
                     if self.num1*self.num2 == number_sent:
                         self.paused = True
-                        await self.add_point_to_user(person_sent)
+                        await self.add_point_to_user(person_sent, self.op)
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=True
+                        )
                         await self.send({
                             "type": "websocket.send",
-                            "text": person_sent + " won"
+                            "text": "You won"
                         })
+                    else:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - self.submissionStartTime),
+                            againstAI=True,
+                            isCorrect=False
+                        )
             else:
+                await self.add_submission(
+                    username=person_sent,
+                    op=self.op,
+                    timeTaken=(time() - self.submissionStartTime),
+                    againstAI=True,
+                    isCorrect=False
+                )
                 await self.send({
                     "type": "websocket.send",
                     "text": "You lost"
@@ -310,37 +476,42 @@ class GameConsumer(AsyncConsumer):
         print("disconnected", event)
 
     @database_sync_to_async
-    def add_point_to_user(self, username):
+    def add_point_to_user(self, username, op):
         database_request_thread = threading.Thread(
             target=self.add_points_to_user_thread_func, 
-            args=(username,)
+            args=(username, op,)
         )
         database_request_thread.start()
         
-    def add_points_to_user_thread_func(self, username):
+    def add_points_to_user_thread_func(self, username, op):
         winner = User.objects.get(username=username)
         winner.points = winner.points + 1
+        if op == "+":
+            winner.addition = winner.addition + 1
+        elif op == "-":
+            winner.subtraction = winner.subtraction + 1
+        elif op == "*":
+            winner.multiplication = winner.multiplication + 1
+        else:
+            winner.division = winner.division + 1
         winner.save()
 
-class ChatConsumer(AsyncConsumer):
-    async def websocket_connect(self, event):
-        print("connected", event)
-        await self.send({
-            "type": "websocket.accept"
-        })
-        print("url rout: ")
-        print(self.scope['url_route'])
-        #other_user = self.scope['url_route']['kwargs']['username']
-        #me = self.scope['user']
-        #print(me, other_user)
-       
-
-    async def websocket_receive(self, event):
-        print("receive", event)
-
-    async def websocket_disconnect(self, event):
-        print("disconnected", event)
 
     @database_sync_to_async
-    def get_thread(self, user, other_username):
-        return Tread.objects.get_or_new(user, other_username)[0]
+    def add_submission(self, username, op, timeTaken, againstAI, isCorrect):
+        database_request_thread = threading.Thread(
+            target=self.add_submission_thread_func, 
+            args=(username, op, timeTaken, againstAI, isCorrect,)
+        )
+        database_request_thread.start()
+        
+    def add_submission_thread_func(self, username, op, timeTaken, againstAI, isCorrect):
+        user = User.objects.get(username=username)
+        submission = Submission(
+            user=user,
+            againstAI=againstAI,
+            isCorrect=isCorrect,
+            typeOfProblem=op,
+            timeToFinish=timeTaken
+        )
+        submission.save()

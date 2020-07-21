@@ -3,7 +3,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from channels.security.websocket import AllowedHostsOriginValidator, AllowedHostsOriginValidator
 
-from MentalMathWebsite.consumers import ChatConsumer, FindGameConsumer, GameConsumer, SoloGameConsumer
+from MentalMathWebsite.consumers import FindGameConsumer, GameConsumer, SoloGameConsumer
 
 from django.urls import path
 
@@ -12,7 +12,6 @@ application = ProtocolTypeRouter({
         AuthMiddlewareStack(
             URLRouter(
                 [
-                    path("test", ChatConsumer),
                     path("MentalMathWebsite/findGame", FindGameConsumer),
                     path("MentalMathWebsite/<username1>/<username2>", GameConsumer),
                     path("MentalMathWebsite/<username>", SoloGameConsumer)

@@ -12,5 +12,46 @@ Profile
 
 
 {% block content %}
-{{ user.points }}
+<div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%; color: whitesmoke;">
+    <div class="container text-center my-4 ">
+        <h1>{{ user.username }}</h1>
+        <h3 style="margin-top: 20px;">Points: {{ user.points }}</h2>
+        <div class="row" style="margin-top: 50px;">
+            <div class="col" style="margin-left: 10px; margin-right: 10px;">
+                <div class="row">
+                    <h6>Addition Points: {{ user.addition }}</h5>
+                </div>
+                <div class="row" style="margin-top: 50px;">
+                    <h6>Avg time taken: {{ addition_avg_succ_resp_time }}</h5>
+                </div>
+            </div>
+            <div class="col" style="margin-left: 10px; margin-right: 10px;">
+                <div class="row">
+                    <h6>Multiplication Points: {{ user.multiplication }}</h5>
+                </div>
+                <div class="row" style="margin-top: 50px;">
+                    <h6>Avg time taken: {{ multiplication_avg_succ_resp_time }}</h5>
+                </div>
+            </div>
+            <div class="col" style="margin-left: 10px; margin-right: 10px;">
+                <div class="row">
+                    <h6>Division Points: {{ user.division }}</h5>
+                </div>
+                <div class="row" style="margin-top: 50px;">
+                    <h6>Avg time taken: {{ division_avg_succ_resp_time }}</h5>
+                </div>
+            </div>
+            <div class="col" style="margin-left: 10px; margin-right: 10px;">
+                <div class="row">
+                    <h6>Subtraction Points: {{ user.subtraction }}</h5>
+                </div>
+                <div class="row" style="margin-top: 50px;">
+                    <h6>Avg time taken: {{ subtraction_avg_succ_resp_time }}</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
 {% endblock %}

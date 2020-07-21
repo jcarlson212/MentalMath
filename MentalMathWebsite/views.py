@@ -1,7 +1,7 @@
 from django.shortcuts import render, reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from .models import User
+from .models import User, Submission
 
 # Create your views here.
 def index(request):
@@ -12,6 +12,9 @@ def register(request):
         username = request.POST['username']
         password = request.POST['password']
         email = request.POST["email"]
+        profilePicture = request.POST["profilePicture"]
+        print(profilePicture)
+        return HttpResponse("test")
         #check if user exists
         if len(User.objects.filter(username=username)) > 0:
             return render(request, "MentalMathWebsite/register.html", {
@@ -52,6 +55,40 @@ def logout_view(request):
 
 def profile(request):
     if request.user.is_authenticated:
-        return render(request, "MentalMathWebsite/profile.html")
+        user = User.objects.get(username=request.user.username)
+
+        submissions = Submission.objects.filter(user=user)
+
+        addition_avg_succ_resp_time = 0
+        count = 0
+        for sub in submissions:
+            if sub.typeOfProblem == "+" and sub.isCorrect == True:
+                addition_avg_succ_resp_time = (addition_avg_succ_resp_time*count / (count + 1.0)) + (sub.timeToFinish / (count + 1.0))
+                count = count + 1
+        subtraction_avg_succ_resp_time = 0
+        count = 0
+        for sub in submissions:
+            if sub.typeOfProblem == "-" and sub.isCorrect == True:
+                subtraction_avg_succ_resp_time = (subtraction_avg_succ_resp_time*count / (count + 1.0)) + (sub.timeToFinish / (count + 1.0))
+                count = count + 1
+        multiplication_avg_succ_resp_time = 0
+        count = 0
+        for sub in submissions:
+            if sub.typeOfProblem == "*" and sub.isCorrect == True:
+                multiplication_avg_succ_resp_time = (multiplication_avg_succ_resp_time*count / (count + 1.0)) + (sub.timeToFinish / (count + 1.0))
+                count = count + 1
+        division_avg_succ_resp_time = 0
+        count = 0
+        for sub in submissions:
+            if sub.typeOfProblem == "/" and sub.isCorrect == True:
+                division_avg_succ_resp_time = (division_avg_succ_resp_time*count / (count + 1.0)) + (sub.timeToFinish / (count + 1.0))
+                count = count + 1
+
+        return render(request, "MentalMathWebsite/profile.html", {
+            "addition_avg_succ_resp_time": addition_avg_succ_resp_time,
+            "subtraction_avg_succ_resp_time": subtraction_avg_succ_resp_time,
+            "multiplication_avg_succ_resp_time": multiplication_avg_succ_resp_time,
+            "division_avg_succ_resp_time": division_avg_succ_resp_time
+        })
     else:
         return HttpResponse("Please log in")

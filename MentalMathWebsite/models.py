@@ -12,7 +12,21 @@ class User(AbstractUser):
     password = models.CharField(max_length=30)
     email = models.EmailField(max_length=30, unique=True)
     points = models.IntegerField(default=0)
+    multiplication = models.IntegerField(default=0)
+    addition = models.IntegerField(default=0)
+    subtraction = models.IntegerField(default=0)
+    division = models.IntegerField(default=0)
 
+class UserProfilePicture(models.Model):
+    user = models.ForeignKey(User, primary_key=True, on_delete=models.CASCADE)
+
+class Submission(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    againstAI = models.BooleanField()
+    isCorrect = models.BooleanField()
+    typeOfProblem = models.CharField(max_length=1)
+    timeToFinish = models.FloatField()
+    dateOfProblem = models.DateTimeField(auto_now_add=True)
 
 class ThreadManager(models.Manager):
     def by_user(self, user):
