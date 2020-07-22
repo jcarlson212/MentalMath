@@ -20,12 +20,13 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'rw9si7+rx$lvp@o-v%td=6=_g-9+5r+hn3-$lvowi8jof7)ny$'
+#SECRET_KEY = 'rw9si7+rx$lvp@o-v%td=6=_g-9+5r+hn3-$lvowi8jof7)ny$'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["mentalmathwebsite.herokuapp.com"]
 
 AUTH_USER_MODEL = "MentalMathWebsite.User" 
 
