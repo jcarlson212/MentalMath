@@ -19,7 +19,7 @@ class User(AbstractUser):
 
 class UserProfilePicture(models.Model):
     user = models.ForeignKey(User, primary_key=True, on_delete=models.CASCADE)
-    image = models.URLField(max_length=200, default="")
+    image = models.URLField(max_length=201, default="")
 
 class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
