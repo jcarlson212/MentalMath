@@ -8,9 +8,9 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class User(AbstractUser):
-    username = models.CharField(max_length=30, unique=True)
-    password = models.CharField(max_length=30)
-    email = models.EmailField(max_length=30, unique=True)
+    username = models.CharField(max_length=50, unique=True)
+    password = models.CharField(max_length=50)
+    email = models.EmailField(max_length=50, unique=True)
     points = models.IntegerField(default=0)
     multiplication = models.IntegerField(default=0)
     addition = models.IntegerField(default=0)
