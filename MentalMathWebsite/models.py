@@ -8,9 +8,9 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class User(AbstractUser):
-    username = models.CharField(unique=True)
-    password = models.CharField()
-    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=50, unique=True)
+    password = models.CharField(max_length=50)
+    email = models.EmailField(max_length=50, unique=True)
     points = models.IntegerField(default=0)
     multiplication = models.IntegerField(default=0)
     addition = models.IntegerField(default=0)
@@ -19,13 +19,13 @@ class User(AbstractUser):
 
 class UserProfilePicture(models.Model):
     user = models.ForeignKey(User, primary_key=True, on_delete=models.CASCADE)
-    image = models.URLField(default="")
+    image = models.URLField(max_length=201, default="")
 
 class Submission(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     againstAI = models.BooleanField()
     isCorrect = models.BooleanField()
-    typeOfProblem = models.CharField()
+    typeOfProblem = models.CharField(max_length=1)
     timeToFinish = models.FloatField()
     dateOfProblem = models.DateTimeField(auto_now_add=True)
 
