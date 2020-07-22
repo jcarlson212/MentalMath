@@ -21,8 +21,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-#SECRET_KEY = 'rw9si7+rx$lvp@o-v%td=6=_g-9+5r+hn3-$lvowi8jof7)ny$'
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = 'rw9si7+rx$lvp@o-v%td=6=_g-9+5r+hn3-$lvowi8jof7)ny$'
+#SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -80,9 +80,24 @@ WSGI_APPLICATION = 'MentalMath.wsgi.application'
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
+    #'default': {
+        #'ENGINE': 'django.db.backends.sqlite3',
+        #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    #}
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+        'NAME': 'de2s2qlae3tllo',
+
+        'USER': 'sonazlpwxemmbi',
+
+        'PASSWORD': 'ed9d8b10db1d263a219fb55b0d9aeb2ccbe8a1de09f355a617082c9dfc84a8eb',
+
+        'HOST': 'ec2-3-208-50-226.compute-1.amazonaws.com',
+
+        'PORT': '5432',
+
     }
 }
 
