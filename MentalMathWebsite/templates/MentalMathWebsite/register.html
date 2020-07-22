@@ -21,11 +21,12 @@ Register
                     <label for="password" style="color: white;">Password</label>
                     <input type="password" class="form-control" id="password" name="password">
                 </div>
-                <div class="form-group">
-                    <input type="image" class="form-control" id="profilePicture" name="profilePicture">
-                </div>
+                <label style="color: white;">Profile Picture (optional)</label>
+                <div class="from-group" style="color: white;">
+                    <input type="url" class="form-control" id="profilePicture" name="profilePicture">
+                </div>              
                 {% csrf_token %}
-                <button type="submit" class="btn btn-info">Submit</button>
+                <button type="submit" class="btn btn-info" style="margin-top: 10px;">Submit</button>
             </form>
         
             {% if message != "" %} 

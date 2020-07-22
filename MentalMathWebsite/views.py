@@ -1,7 +1,7 @@
 from django.shortcuts import render, reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.contrib.auth import authenticate, login, logout
-from .models import User, Submission
+from .models import User, Submission, UserProfilePicture
 
 # Create your views here.
 def index(request):
@@ -13,16 +13,20 @@ def register(request):
         password = request.POST['password']
         email = request.POST["email"]
         profilePicture = request.POST["profilePicture"]
-        print(profilePicture)
-        return HttpResponse("test")
+        
         #check if user exists
         if len(User.objects.filter(username=username)) > 0:
             return render(request, "MentalMathWebsite/register.html", {
                 "message": "Username is not unique"
             })
         
+
         newUser = User.objects.create_user(username, email, password)
         newUser.save()
+        if profilePicture != "":
+            newProfilePic = UserProfilePicture(user=newUser, image=profilePicture)
+            newProfilePic.save()
+
         login(request, newUser)
         return HttpResponseRedirect(reverse('index'))
     else:
@@ -83,12 +87,24 @@ def profile(request):
             if sub.typeOfProblem == "/" and sub.isCorrect == True:
                 division_avg_succ_resp_time = (division_avg_succ_resp_time*count / (count + 1.0)) + (sub.timeToFinish / (count + 1.0))
                 count = count + 1
+        profilePic = ""
+        if len(UserProfilePicture.objects.filter(user=user)) > 0:
+            profilePic = UserProfilePicture.objects.filter(user=user)[0].image
 
         return render(request, "MentalMathWebsite/profile.html", {
             "addition_avg_succ_resp_time": addition_avg_succ_resp_time,
             "subtraction_avg_succ_resp_time": subtraction_avg_succ_resp_time,
             "multiplication_avg_succ_resp_time": multiplication_avg_succ_resp_time,
-            "division_avg_succ_resp_time": division_avg_succ_resp_time
+            "division_avg_succ_resp_time": division_avg_succ_resp_time,
+            "profilePic": profilePic
         })
     else:
         return HttpResponse("Please log in")
+
+
+def leaderboard(request):
+    userList = sorted(User.objects.all(), key= lambda u: u.points, reverse=True)
+
+    return render(request, "MentalMathWebsite/leaderboard.html",{
+        "userList": userList
+    })

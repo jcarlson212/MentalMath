@@ -15,38 +15,47 @@ Profile
 <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%; color: whitesmoke;">
     <div class="container text-center my-4 ">
         <h1>{{ user.username }}</h1>
+        {% if profilePic != "" %}
+        <img src="{{ profilePic }}" height="200" width="180" alt="Profile Picture">
+        {% else %}
+        <img src="https://static.thenounproject.com/png/17241-200.png" height="200" width="180" alt="Profile Picture">
+        {% endif %}
         <h3 style="margin-top: 20px;">Points: {{ user.points }}</h2>
-        <div class="row" style="margin-top: 50px;">
+        <div class="alert alert-secondary my-5" role="alert">
+            <h3>Stats</h3>
+        </div>
+       
+        <div class="row" style="margin-top: 50px; height: 500px;">
             <div class="col" style="margin-left: 10px; margin-right: 10px;">
-                <div class="row">
-                    <h6>Addition Points: {{ user.addition }}</h5>
+                <div class="row" style="width:100%;">
+                    <h6 style="width:100%;">Addition Points: {{ user.addition }}</h6>
                 </div>
                 <div class="row" style="margin-top: 50px;">
-                    <h6>Avg time taken: {{ addition_avg_succ_resp_time }}</h5>
+                    <h6>Avg time taken: {{ addition_avg_succ_resp_time|floatformat:2 }} seconds</h6>
                 </div>
             </div>
             <div class="col" style="margin-left: 10px; margin-right: 10px;">
-                <div class="row">
-                    <h6>Multiplication Points: {{ user.multiplication }}</h5>
+                <div class="row" style="width: 100%;">
+                    <h6 style="width:100%;">Multiplication Points: {{ user.multiplication }}</h6>
                 </div>
                 <div class="row" style="margin-top: 50px;">
-                    <h6>Avg time taken: {{ multiplication_avg_succ_resp_time }}</h5>
+                    <h6>Avg time taken: {{ multiplication_avg_succ_resp_time|floatformat:2 }} seconds</h6>
                 </div>
             </div>
             <div class="col" style="margin-left: 10px; margin-right: 10px;">
-                <div class="row">
-                    <h6>Division Points: {{ user.division }}</h5>
+                <div class="row" style="width:100%;">
+                    <h6 style="width:100%;">Division Points: {{ user.division }}</h6>
                 </div>
                 <div class="row" style="margin-top: 50px;">
-                    <h6>Avg time taken: {{ division_avg_succ_resp_time }}</h5>
+                    <h6>Avg time taken: {{ division_avg_succ_resp_time|floatformat:2 }} seconds</h6>
                 </div>
             </div>
             <div class="col" style="margin-left: 10px; margin-right: 10px;">
-                <div class="row">
-                    <h6>Subtraction Points: {{ user.subtraction }}</h5>
+                <div class="row" style="width:100%;">
+                    <h6 style="width:100%;">Subtraction Points: {{ user.subtraction }}</h6>
                 </div>
                 <div class="row" style="margin-top: 50px;">
-                    <h6>Avg time taken: {{ subtraction_avg_succ_resp_time }}</h5>
+                    <h6>Avg time taken: {{ subtraction_avg_succ_resp_time|floatformat:2 }} seconds</h6>
                 </div>
             </div>
         </div>

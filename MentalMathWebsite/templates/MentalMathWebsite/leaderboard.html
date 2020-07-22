@@ -1,0 +1,43 @@
+{% extends 'MentalMathWebsite/layout.html' %}
+
+
+{% block title %}
+Leaderboard
+{% endblock %}
+
+
+{% block moreScripts %}
+
+{% endblock %}
+
+
+{% block content %}
+<div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%; color: whitesmoke;">
+    <div class="container text-center my-4 ">
+        <ol>
+            <li style="width: 100%;">
+                <div class="row alert alert-info" style="width: 100%;" role="alert">
+                        <div class="col">
+                            <h2>Username</h1>
+                        </div>
+                        <div class="col">
+                            <h2>Points</h1>
+                        </div>
+                    </div>
+            </li>
+            {% for user in userList %}
+            <li class="row" style="width: 100%; margin-top: 20px;">
+                <div class="col">
+                    <h4>{{ user.username }}</h4>
+                </div>
+                <div class="col">
+                    <h4>{{ user.points }}</h4>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+    
+</div>
+
+{% endblock %}
