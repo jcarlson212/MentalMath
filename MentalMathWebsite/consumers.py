@@ -27,6 +27,7 @@ class FindGameConsumer(AsyncConsumer):
         await self.send({
             "type": "websocket.accept"
         })
+        self.username = ""
         self.event_loop = asyncio.get_event_loop()
     
     async def websocket_error(self, event):
@@ -35,7 +36,7 @@ class FindGameConsumer(AsyncConsumer):
     async def websocket_receive(self, event):
         print("receive", event)
         print(event, " is trying to find a game")
-        
+        self.username = event
         userQ.append(event['text'])
         print(userQ)
         if(len(userQ) > 1):
@@ -116,7 +117,12 @@ class FindGameConsumer(AsyncConsumer):
 
     async def websocket_disconnect(self, event):
         print("disconnected", event)
-
+        remove = []
+        for u in userQ:
+            if u == self.username:
+                remove.append(u)
+        for u in remove:
+            userQ.remove(u)
 
 class SoloGameConsumer(AsyncConsumer):
     async def websocket_connect(self, event):
