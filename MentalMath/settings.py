@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ["mentalmathwebsite.herokuapp.com"]
 
 AUTH_USER_MODEL = "MentalMathWebsite.User" 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -76,30 +77,20 @@ TEMPLATES = [
 WSGI_APPLICATION = 'MentalMath.wsgi.application'
 
 
+
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
 DATABASES = {
-    #'default': {
-        #'ENGINE': 'django.db.backends.sqlite3',
-        #'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    #}
     'default': {
-
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-
-        'NAME': 'de2s2qlae3tllo',
-
-        'USER': 'sonazlpwxemmbi',
-
-        'PASSWORD': 'ed9d8b10db1d263a219fb55b0d9aeb2ccbe8a1de09f355a617082c9dfc84a8eb',
-
-        'HOST': 'ec2-3-208-50-226.compute-1.amazonaws.com',
-
-        'PORT': '5432',
-
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+
 }
+
+
+
 
 
 # Password validation

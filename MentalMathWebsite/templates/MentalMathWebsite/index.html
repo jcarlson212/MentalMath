@@ -22,6 +22,20 @@ Mental Math
         document.getElementById("loadingAnimation").style.visibility = "hidden";
     }
 
+    const showWon = () => {
+        document.getElementById("won").style.visibility = "visible";
+        document.getElementById("won").style.display = "block";
+        document.getElementById("lost").style.visibility = "hidden";
+        document.getElementById("lost").style.display = "none";
+    }
+
+    const showLost = () => {
+        document.getElementById("won").style.visibility = "hidden";
+        document.getElementById("won").style.display = "none";
+        document.getElementById("lost").style.visibility = "visible";
+        document.getElementById("lost").style.display = "block";
+    }
+
 
     let findGameSocket =null;
     let gameSocket = null;
@@ -38,7 +52,7 @@ Mental Math
 
 
         const ws = (window.location.protocol === 'https:') ? 'wss://' : 'ws://'
-        const endpoint = ws + window.location.host + window.location.pathname + "findGame"
+        const endpoint = ws + window.location.host + window.location.pathname + "MentalMathWebsite/findGame"
 
         findGameSocket = new WebSocket(endpoint);
         findGameSocket.onopen = (event) => {
@@ -48,6 +62,8 @@ Mental Math
                 //event should be the endpoint for the match
                 event = event.data
                 gameSocket = new WebSocket(ws + window.location.host + event);
+                gameSocket.onerror = (event) => {console.log(event)}
+
                 gameSocket.onopen = (event) =>{
                     let formData = document.getElementById('match-form');
                     formData.addEventListener('submit', (event) => {
@@ -57,8 +73,11 @@ Mental Math
                         }
                         
                     });
+                    gameSocket.onerror = (event) => {console.log(event)}
+                    
                     let gameCount = 0;
                     gameSocket.onmessage = (event) => {
+                        console.log(event)
                         event = event.data
                         const postedString = "numbers posted:"
                         if(event.length >= postedString.length && event.substr(0, postedString.length) === postedString){
@@ -86,6 +105,7 @@ Mental Math
                                 endIndex++;
                             }
                             const diff = parseInt(event.substr(startIndex, endIndex-startIndex+1));
+                            console.log(diff)
                             clearNumberInput()
                             console.log("the numbers and ops posted were: ", num1, num2, operator);
                             clearLoadingAnimation()
@@ -93,19 +113,24 @@ Mental Math
                             document.getElementById('match-form').style.visibility = "visible";
                             gameCount++;
                             const prevGameCount = gameCount;
-                            setTimeout(() => {
-                                if(prevGameCount === gameCount) {
-                                    console.log("you lost")
-                                    gameSocket.send("start_new_game" + " " + "{{user.username}}")
-                                }
-                            }, diff*1000)
+                            if(!isNaN(diff)){
+                                setTimeout(() => {
+                                    if(prevGameCount === gameCount) {
+                                        console.log("you lost-set")
+                                        showLost()
+                                        gameSocket.send("start_new_game" + " " + "{{user.username}}")
+                                    }
+                                }, diff*1000)
+                            }
                         }else if(event === "{{user.username}} won" || event === "You won" ){
                             console.log("I won")
+                            showWon()
                             const pointsEarnedStart = "Points earned: "
                             document.getElementById("count").innerText = pointsEarnedStart + (parseInt(document.getElementById("count").innerText.substr((pointsEarnedStart).length))+ 1)
                             gameSocket.send("start_new_game" + " " + "{{user.username}}")
                         }else{
                             console.log("I lost")
+                            showLost()
                             gameSocket.send("start_new_game" + " " + "{{user.username}}")
                         }
                     }
@@ -123,11 +148,24 @@ Mental Math
 {% block content %}
     <div class="bg-dark d-flex flex-column flex-grow-1" style="height: 100%;">
         {%if user.is_authenticated %}
-        <div id="count" class="alert alert-success" role="alert" style="margin-top: 150px; width: 200px; margin-left: 10px;">
+        <div id="count" class="alert alert-success" role="alert" style="margin-top: 50px; width: 200px; margin-left: 10px;">
             Points earned: 0
         </div>
         {% endif %}
-        <div class="container text-center my-5" style="height: 100px;">
+        
+
+        <div class="container text-center" style="height: 100px;">
+            <div style="height: 50px; width: 60%; margin-left: 20%">
+                {%if user.is_authenticated %}
+                <div id="won" class="alert alert-success" role="alert" style="height: 100%; width: 60%; margin-left: 20%; visibility: hidden; display: none;">
+                    You Won!
+                </div>
+                <div id="lost" class="alert alert-danger" role="alert" style="height: 100%; width: 60%; margin-left: 20%; visibility: hidden; display: none;">
+                    You Lost!
+                </div>
+                {% endif %}
+            </div>
+            
             <div id="match" style="display:inline-block;">
                 <form id="match-form" style="visibility: hidden;" src='' method="dialog">
                     <div class="form-group">
@@ -142,7 +180,7 @@ Mental Math
                 </form>
             </div>
         </div>
-        <div id="loadingAnimation" class="loader" style="visibility: hidden;">
+        <div id="loadingAnimation" class="loader" style="visibility: hidden; margin-top: 100px;">
             <div class="duo duo1">
                 <div class="dot dot-a"></div>
                 <div class="dot dot-b"></div>
@@ -153,8 +191,8 @@ Mental Math
             </div>
         </div>
         {% if user.is_authenticated %}
-        <div class="container text-center my-auto ">
-            <div class="find-match-button">
+        <div class="container text-center">
+            <div class="find-match-button" style="margin-top: 200px;">
                 <button type="button" class="btn btn-info btn-lg" onclick="findMatch()">Find Match</button>
             </div>
         </div>
