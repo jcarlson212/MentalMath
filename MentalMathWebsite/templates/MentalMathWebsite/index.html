@@ -9,6 +9,7 @@ Mental Math
 {% block moreScripts %}
 <script>
     const operators = ["+", "*", "/", "-"]
+    const postedString = "numbers posted:"
     
     const clearNumberInput = () => {
         document.getElementById("numberInput").value = ""
@@ -36,6 +37,17 @@ Mental Math
         document.getElementById("lost").style.display = "block";
     }
 
+    const isEmpty = (numToSubmit) => {
+        return (numToSubmit === " " || numToSubmit === "")
+    }
+
+    const numSubmissionMessage = (numToSubmit) => {
+        return (numToSubmit + " " + "{{ user.username }}")
+    }
+
+    const isPostedProblem = (msg) => {
+        return (msg.length >= postedString.length && msg.substr(0, postedString.length) === postedString)
+    }
 
     let findGameSocket =null;
     let gameSocket = null;
@@ -62,16 +74,14 @@ Mental Math
                 //event should be the endpoint for the match
                 event = event.data
                 gameSocket = new WebSocket(ws + window.location.host + event);
-                gameSocket.onerror = (event) => {console.log(event)}
 
                 gameSocket.onopen = (event) =>{
                     let formData = document.getElementById('match-form');
                     formData.addEventListener('submit', (event) => {
                         const numToSubmit = event.path[0][0].value
-                        if(numToSubmit !== " " && numToSubmit !== ""){
-                            gameSocket.send(numToSubmit + " " + "{{ user.username }}")
+                        if(!isEmpty(numToSubmit)){
+                            gameSocket.send(numSubmissionMessage(numToSubmit + " " + "{{ user.username }}"))
                         }
-                        
                     });
                     gameSocket.onerror = (event) => {console.log(event)}
                     
@@ -79,8 +89,7 @@ Mental Math
                     gameSocket.onmessage = (event) => {
                         console.log(event)
                         event = event.data
-                        const postedString = "numbers posted:"
-                        if(event.length >= postedString.length && event.substr(0, postedString.length) === postedString){
+                        if(isPostedProblem(event)){
                             console.log(event)
                             let startIndex = postedString.length + 1;
                             let endIndex = startIndex;
@@ -88,7 +97,6 @@ Mental Math
                                 endIndex++;
                             }
                             const num1 = event.substr(startIndex, endIndex-startIndex+1);
-                            console.log(startIndex, endIndex, num1)
                             startIndex = endIndex + 2;
                             const operator = event[startIndex];
                             startIndex = startIndex + 2;
@@ -105,7 +113,6 @@ Mental Math
                                 endIndex++;
                             }
                             const diff = parseInt(event.substr(startIndex, endIndex-startIndex+1));
-                            console.log(diff)
                             clearNumberInput()
                             console.log("the numbers and ops posted were: ", num1, num2, operator);
                             clearLoadingAnimation()
@@ -202,8 +209,5 @@ Mental Math
         </div>
         {% endif %}
     </div>
-    
-
-    
 
 {% endblock %}
