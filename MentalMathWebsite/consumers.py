@@ -326,6 +326,7 @@ class SoloGameConsumer(AsyncConsumer):
         database_request_thread.start()
         
     def add_submission_thread_func(self, username, op, timeTaken, againstAI, isCorrect):
+        print("USERNAME FOR DATABASE REQUEST: ",username)
         user = User.objects.get(username=username)
         submission = Submission(
             user=user,

@@ -79,8 +79,9 @@ Mental Math
                     let formData = document.getElementById('match-form');
                     formData.addEventListener('submit', (event) => {
                         const numToSubmit = event.path[0][0].value
+                        console.log(numToSubmit)
                         if(!isEmpty(numToSubmit)){
-                            gameSocket.send(numSubmissionMessage(numToSubmit + " " + "{{ user.username }}"))
+                            gameSocket.send(numSubmissionMessage(numToSubmit))
                         }
                     });
                     gameSocket.onerror = (event) => {console.log(event)}
