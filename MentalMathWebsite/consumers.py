@@ -37,29 +37,36 @@ class FindGameConsumer(AsyncConsumer):
         print("receive", event)
         print(event, " is trying to find a game")
         self.username = event
+        for u in userQ:
+            if u == event["text"]:
+                userQ.remove(u)
         userQ.append(event['text'])
         print(userQ)
         if(len(userQ) > 1):
             user1 = userQ.pop()
             user2 = userQ.pop()
-            print("sending")
-            route = "/MentalMathWebsite/" + user1 + "/" + user2
-            operators = ["+", "*", "/", "-"]
-            matches[route] = {
-                "user1": user1,
-                "user2": user2,
-                "isPaused": False,
-                "num1": random.randint(1, MAX_NUM),
-                "num2":random.randint(1, MAX_NUM),
-                "submissionStartTime": time(),
-                "op": operators[random.randint(0, len(operators)-1)],
-                "pauseCount": 0
-            }
-            await self.send({
-                "type": "websocket.send",
-                "text": "/MentalMathWebsite/" + user1 + "/" + user2
-            })
-            print("sent")
+            if user1 != user2:
+                print("sending")
+                route = "/MentalMathWebsite/" + user1 + "/" + user2
+                operators = ["+", "*", "/", "-"]
+                matches[route] = {
+                    "user1": user1,
+                    "user2": user2,
+                    "isPaused": False,
+                    "num1": random.randint(1, MAX_NUM),
+                    "num2":random.randint(1, MAX_NUM),
+                    "submissionStartTime": time(),
+                    "op": operators[random.randint(0, len(operators)-1)],
+                    "pauseCount": 0
+                }
+                await self.send({
+                    "type": "websocket.send",
+                    "text": "/MentalMathWebsite/" + user1 + "/" + user2
+                })
+                print("sent")
+            else:
+                
+                await self.determine_match(event["text"])
         else:
             #wait a bit before removing them from the queue and setting them up in a match against a bot
             await self.determine_match(event["text"])
@@ -106,7 +113,10 @@ class FindGameConsumer(AsyncConsumer):
             for key in matches:
                 if matches[key]["user1"] == username or matches[key]["user2"] == username:
                     asyncio.ensure_future(self.give_user_match(key), loop=self.event_loop)
-                    break
+                    return
+            userQ.remove(username)
+            print("starting ai match")
+            asyncio.ensure_future(self.give_user_ai_match(username), loop=self.event_loop)
     
     async def give_user_match(self, route):
         await self.send({
@@ -367,6 +377,7 @@ class GameConsumer(AsyncConsumer):
         try:
             while matches[self.match_route]["pauseCount"] < 2 and matches[self.match_route]["isPaused"]:
                 await asyncio.sleep(.1)
+            print("sending")
             matches[self.match_route]["pauseCount"] = 0
             matches[self.match_route]["isPaused"] = False
             postedString = "numbers posted:"
@@ -385,192 +396,190 @@ class GameConsumer(AsyncConsumer):
         print(event, " was sent to us")
         startText = "start_new_game"
         endIndex = 0
-        try:
-            if event["text"][0] != ' ':
-                while event["text"][endIndex + 1] != ' ':
-                    endIndex = endIndex + 1
-            else:
-                endIndex = -1
+        if event["text"][0] != ' ':
+            while event["text"][endIndex + 1] != ' ':
+                endIndex = endIndex + 1
+        else:
+            endIndex = -1
 
-            if event["text"][0:endIndex+1] == "start_new_game":
-                await self.newProblem()
-            else:
-                number_sent = int(event["text"][0:endIndex+1])
-                person_sent = event["text"][endIndex+2:len(event["text"])]
-                if not matches[self.match_route]["isPaused"]:
-                    if matches[self.match_route]["op"] == "+":
-                        if matches[self.match_route]["num1"] + matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
-                            matches[self.match_route]["isPaused"] = True
-                            matches[self.match_route]["pauseCount"] = 1
-                            await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=True
-                            )
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You won"
-                            })
-                        else:
-                            await self.add_submission(
-                                username=person_sent,
-                                op=self.op,
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=False
-                            )
-                            operators = ["+", "*", "/", "-"]
-                            num1 = random.randint(1, MAX_NUM)
-                            op = operators[random.randint(0, len(operators)-1)]
-                            num2 = random.randint(1, MAX_NUM)
-                            matches[self.match_route]["num1"] = num1
-                            matches[self.match_route]["op"] = op
-                            matches[self.match_route]["num2"] = num2 
-                            matches[self.match_route]["submissionStartTime"] = time()
-                            matches[self.match_route]["pauseCount"] = 2
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You lost"
-                            })
+        if event["text"][0:endIndex+1] == "start_new_game":
+            await self.newProblem()
+        else:
+            number_sent = int(event["text"][0:endIndex+1])
+            person_sent = event["text"][endIndex+2:len(event["text"])]
+            if not matches[self.match_route]["isPaused"]:
+                if matches[self.match_route]["op"] == "+":
+                    if matches[self.match_route]["num1"] + matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
+                        matches[self.match_route]["isPaused"] = True
+                        matches[self.match_route]["pauseCount"] = 1
+                        await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=True
+                        )
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You won"
+                        })
+                    elif matches[self.match_route]["isPaused"]:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=self.op,
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=False
+                        )
+                        operators = ["+", "*", "/", "-"]
+                        num1 = random.randint(1, MAX_NUM)
+                        op = operators[random.randint(0, len(operators)-1)]
+                        num2 = random.randint(1, MAX_NUM)
+                        matches[self.match_route]["num1"] = num1
+                        matches[self.match_route]["op"] = op
+                        matches[self.match_route]["num2"] = num2 
+                        matches[self.match_route]["submissionStartTime"] = time()
+                        matches[self.match_route]["pauseCount"] = 2
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You lost"
+                        })
 
-                    elif matches[self.match_route]["op"] == "-":
-                        if matches[self.match_route]["num1"] - matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
-                            matches[self.match_route]["isPaused"] = True
-                            matches[self.match_route]["pauseCount"] = 1
-                            await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=True
-                            )
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You won"
-                            })
-                        else:
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=False
-                            )
-                            operators = ["+", "*", "/", "-"]
-                            num1 = random.randint(1, MAX_NUM)
-                            op = operators[random.randint(0, len(operators)-1)]
-                            num2 = random.randint(1, MAX_NUM)
-                            matches[self.match_route]["num1"] = num1
-                            matches[self.match_route]["op"] = op
-                            matches[self.match_route]["num2"] = num2 
-                            matches[self.match_route]["submissionStartTime"] = time()
-                            matches[self.match_route]["pauseCount"] = 2
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You lost"
-                            })
-                    elif matches[self.match_route]["op"] == "/":
-                        if int(matches[self.match_route]["num1"] / matches[self.match_route]["num2"]) == number_sent and not matches[self.match_route]["isPaused"]:
-                            matches[self.match_route]["isPaused"] = True
-                            matches[self.match_route]["pauseCount"] = 1
-                            await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=True
-                            )
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You won"
-                            })
-                        else:
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=False
-                            )
-                            operators = ["+", "*", "/", "-"]
-                            num1 = random.randint(1, MAX_NUM)
-                            op = operators[random.randint(0, len(operators)-1)]
-                            num2 = random.randint(1, MAX_NUM)
-                            matches[self.match_route]["num1"] = num1
-                            matches[self.match_route]["op"] = op
-                            matches[self.match_route]["num2"] = num2 
-                            matches[self.match_route]["submissionStartTime"] = time()
-                            matches[self.match_route]["pauseCount"] = 2
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You lost"
-                            })
-                    elif matches[self.match_route]["op"] == "*":
-                        if matches[self.match_route]["num1"]*matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
-                            matches[self.match_route]["isPaused"] = True
-                            matches[self.match_route]["pauseCount"] = 1
-                            await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=True
-                            )
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You won"
-                            })
-                        else:
-                            await self.add_submission(
-                                username=person_sent,
-                                op=matches[self.match_route]["op"],
-                                timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                                againstAI=True,
-                                isCorrect=False
-                            )
-                            operators = ["+", "*", "/", "-"]
-                            num1 = random.randint(1, MAX_NUM)
-                            op = operators[random.randint(0, len(operators)-1)]
-                            num2 = random.randint(1, MAX_NUM)
-                            matches[self.match_route]["num1"] = num1
-                            matches[self.match_route]["op"] = op
-                            matches[self.match_route]["num2"] = num2 
-                            matches[self.match_route]["submissionStartTime"] = time()
-                            matches[self.match_route]["pauseCount"] = 2
-                            await self.send({
-                                "type": "websocket.send",
-                                "text": "You lost"
-                            })
-                else:
-                    await self.add_submission(
-                        username=person_sent,
-                        op=matches[self.match_route]["op"],
-                        timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
-                        againstAI=True,
-                        isCorrect=False
-                    )
-                    operators = ["+", "*", "/", "-"]
-                    num1 = random.randint(1, MAX_NUM)
-                    op = operators[random.randint(0, len(operators)-1)]
-                    num2 = random.randint(1, MAX_NUM)
-                    matches[self.match_route]["num1"] = num1
-                    matches[self.match_route]["op"] = op
-                    matches[self.match_route]["num2"] = num2 
-                    matches[self.match_route]["submissionStartTime"] = time()
-                    matches[self.match_route]["pauseCount"] = 2
-                    matches[self.match_route]["pauseCount"] = 2
-                    await self.send({
-                        "type": "websocket.send",
-                        "text": "You lost"
-                    })
-        except:
-            print("exception occurred")
+                elif matches[self.match_route]["op"] == "-":
+                    if matches[self.match_route]["num1"] - matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
+                        matches[self.match_route]["isPaused"] = True
+                        matches[self.match_route]["pauseCount"] = 1
+                        await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=True
+                        )
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You won"
+                        })
+                    elif matches[self.match_route]["isPaused"]:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=False
+                        )
+                        operators = ["+", "*", "/", "-"]
+                        num1 = random.randint(1, MAX_NUM)
+                        op = operators[random.randint(0, len(operators)-1)]
+                        num2 = random.randint(1, MAX_NUM)
+                        matches[self.match_route]["num1"] = num1
+                        matches[self.match_route]["op"] = op
+                        matches[self.match_route]["num2"] = num2 
+                        matches[self.match_route]["submissionStartTime"] = time()
+                        matches[self.match_route]["pauseCount"] = 2
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You lost"
+                        })
+                elif matches[self.match_route]["op"] == "/":
+                    if int(matches[self.match_route]["num1"] / matches[self.match_route]["num2"]) == number_sent and not matches[self.match_route]["isPaused"]:
+                        matches[self.match_route]["isPaused"] = True
+                        matches[self.match_route]["pauseCount"] = 1
+                        await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=True
+                        )
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You won"
+                        })
+                    elif matches[self.match_route]["isPaused"]:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=False
+                        )
+                        operators = ["+", "*", "/", "-"]
+                        num1 = random.randint(1, MAX_NUM)
+                        op = operators[random.randint(0, len(operators)-1)]
+                        num2 = random.randint(1, MAX_NUM)
+                        matches[self.match_route]["num1"] = num1
+                        matches[self.match_route]["op"] = op
+                        matches[self.match_route]["num2"] = num2 
+                        matches[self.match_route]["submissionStartTime"] = time()
+                        matches[self.match_route]["pauseCount"] = 2
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You lost"
+                        })
+                elif matches[self.match_route]["op"] == "*":
+                    if matches[self.match_route]["num1"]*matches[self.match_route]["num2"] == number_sent and not matches[self.match_route]["isPaused"]:
+                        matches[self.match_route]["isPaused"] = True
+                        matches[self.match_route]["pauseCount"] = 1
+                        await self.add_point_to_user(person_sent, matches[self.match_route]["op"])
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=True
+                        )
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You won"
+                        })
+                    elif matches[self.match_route]["isPaused"]:
+                        await self.add_submission(
+                            username=person_sent,
+                            op=matches[self.match_route]["op"],
+                            timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                            againstAI=True,
+                            isCorrect=False
+                        )
+                        operators = ["+", "*", "/", "-"]
+                        num1 = random.randint(1, MAX_NUM)
+                        op = operators[random.randint(0, len(operators)-1)]
+                        num2 = random.randint(1, MAX_NUM)
+                        matches[self.match_route]["num1"] = num1
+                        matches[self.match_route]["op"] = op
+                        matches[self.match_route]["num2"] = num2 
+                        matches[self.match_route]["submissionStartTime"] = time()
+                        matches[self.match_route]["pauseCount"] = 2
+                        await self.send({
+                            "type": "websocket.send",
+                            "text": "You lost"
+                        })
+            else:
+                await self.add_submission(
+                    username=person_sent,
+                    op=matches[self.match_route]["op"],
+                    timeTaken=(time() - matches[self.match_route]["submissionStartTime"]),
+                    againstAI=True,
+                    isCorrect=False
+                )
+                operators = ["+", "*", "/", "-"]
+                num1 = random.randint(1, MAX_NUM)
+                op = operators[random.randint(0, len(operators)-1)]
+                num2 = random.randint(1, MAX_NUM)
+                matches[self.match_route]["num1"] = num1
+                matches[self.match_route]["op"] = op
+                matches[self.match_route]["num2"] = num2 
+                matches[self.match_route]["submissionStartTime"] = time()
+                matches[self.match_route]["pauseCount"] = 2
+                matches[self.match_route]["pauseCount"] = 2
+                await self.send({
+                    "type": "websocket.send",
+                    "text": "You lost"
+                })
+     
 
 
 
