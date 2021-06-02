@@ -63,7 +63,7 @@ sqlparse==0.3.1
 toml==0.10.1
 Twisted==20.3.0
 txaio==20.4.1
-urllib3==1.25.9
+urllib3==1.26.5
 Werkzeug==1.0.1
 whitenoise==5.1.0
 wrapt==1.12.1
